@@ -1,0 +1,15 @@
+# Generated private keys and certificates
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+
+# Local environment/config files
+.env
+.env.*
+
+# OS/editor files
+.DS_Store
+node_modules/
