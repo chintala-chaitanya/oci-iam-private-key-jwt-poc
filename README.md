@@ -190,6 +190,33 @@ To attach a second certificate for rotation, upload the second certificate to th
 }
 ```
 
+## Remove Old Certificate Aliases From The App
+
+After cutover, remove the old certificate alias from the app by replacing the `certificates` list with only the aliases that should remain active.
+
+For example, to keep only `public_certificate_1.crt` active:
+
+```json
+{
+  "schemas": [
+    "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+  ],
+  "Operations": [
+    {
+      "op": "replace",
+      "path": "certificates",
+      "value": [
+        {
+          "certAlias": "public_certificate_1.crt"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Use `replace` for this cleanup step so the app ends with an explicit final list of active certificate aliases.
+
 ## Delete A Certificate From The Keystore
 
 Use the certificate resource ID returned by `GET /admin/v1/OAuthClientCertificates`.
@@ -281,7 +308,7 @@ This enables zero-downtime key rotation with one confidential app:
 - Upload certificate 2 to the keystore with alias `public_certificate_2.crt`.
 - PATCH the same app to also reference `public_certificate_2.crt`.
 - During rotation, client assertions signed with either private key can be accepted.
-- After cutover, remove the old certificate alias from the app and optionally delete the old certificate from the keystore.
+- After cutover, replace the app's `certificates` list with only the active alias and optionally delete the old certificate from the keystore.
 
 The JWT `kid` must match the certificate alias attached to the app.
 
