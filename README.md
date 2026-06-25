@@ -70,8 +70,9 @@ openssl x509 -in public_certificate.crt -text -noout
 hospital-cert
 ```
 
-9. Activate the application.
-10. Copy the OAuth client ID.
+9. Add the `User Administrator` app role if you want to test the token against the users API.
+10. Activate the application.
+11. Copy the OAuth client ID.
 
 ## Generate The JWT Assertion
 
@@ -141,7 +142,7 @@ curl -X GET "https://<domain>.identity.oraclecloud.com/admin/v1/Users?count=5" \
   -H "Accept: application/scim+json"
 ```
 
-The confidential application must have the required privileges to call the API.
+The confidential application must have the required privileges to call the API. For the users API test above, assign the `User Administrator` app role to the confidential application.
 
 ## Key Rotation Finding
 
