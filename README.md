@@ -20,9 +20,9 @@ The JWT header contains:
 
 - `alg`: `RS256`
 - `typ`: `JWT`
-- `kid`: certificate alias configured in OCI IAM Domain
+- `kid`: certificate alias attached to the OCI IAM Domain confidential application
 
-OCI IAM Domain validates the JWT signature using the public certificate uploaded to the confidential application.
+OCI IAM Domain validates the JWT signature using the public certificate stored in the domain keystore and referenced by the confidential application.
 
 ## Prerequisites
 
@@ -64,16 +64,140 @@ openssl x509 -in public_certificate.crt -text -noout
 5. Set the client type to `Trusted`.
 6. Enable the Client Credentials grant type.
 7. Enable JWT assertion/client assertion authentication if shown.
-8. Upload `public_certificate.crt`.
-9. Set the certificate alias/name, for example:
+8. Add the `User Administrator` app role if you want to test the token against the users API.
+9. Activate the application.
+10. Copy the OAuth client ID and application ID.
+
+Do not use the confidential application UI certificate upload for rotation testing. In the UI, uploading a new certificate can replace the certificate reference on the app. For certificate rotation, upload certificates to the IAM Domain keystore using the API, then PATCH the confidential app to reference one or more certificate aliases.
+
+## API Variables
+
+The API examples below use these placeholders:
 
 ```text
-client-cert
+HOST=https://<domain>.identity.oraclecloud.com
+APP_ID=<confidential_app_id>
+CLIENT_ID=<oauth_client_id>
+ACCESS_TOKEN=<admin_access_token>
+CERT_ALIAS=public_certificate_1.crt
 ```
 
-10. Add the `User Administrator` app role if you want to test the token against the users API.
-11. Activate the application.
-12. Copy the OAuth client ID.
+For example, an app details endpoint has this shape:
+
+```text
+https://<domain>.identity.oraclecloud.com/admin/v1/Apps/<confidential_app_id>
+```
+
+## View The Confidential App
+
+```bash
+curl -X GET "$HOST/admin/v1/Apps/$APP_ID" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Accept: application/scim+json"
+```
+
+## Upload A Certificate To The Keystore
+
+Convert the certificate to base64 DER. Do not include PEM headers or footers.
+
+```bash
+CERT_B64=$(openssl x509 -in public_certificate_1.crt -outform DER | openssl base64 -A)
+```
+
+Upload the certificate to the OAuth client certificate keystore:
+
+```bash
+curl -X POST "$HOST/admin/v1/OAuthClientCertificates" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/scim+json" \
+  -H "Accept: application/scim+json" \
+  -d "{
+    \"schemas\": [
+      \"urn:ietf:params:scim:schemas:oracle:idcs:OAuthClientCertificate\"
+    ],
+    \"certificateAlias\": \"$CERT_ALIAS\",
+    \"x509Base64Certificate\": \"$CERT_B64\"
+  }"
+```
+
+Postman raw JSON body:
+
+```json
+{
+  "schemas": [
+    "urn:ietf:params:scim:schemas:oracle:idcs:OAuthClientCertificate"
+  ],
+  "certificateAlias": "public_certificate_1.crt",
+  "x509Base64Certificate": "PASTE_BASE64_DER_CERTIFICATE_HERE"
+}
+```
+
+The `certificateAlias` value is the alias that must be used as the JWT `kid`.
+
+## List Certificates In The Keystore
+
+```bash
+curl -X GET "$HOST/admin/v1/OAuthClientCertificates" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Accept: application/scim+json"
+```
+
+## Attach Certificate Aliases To The App
+
+After uploading the certificate to the keystore, PATCH the confidential application to reference the certificate alias.
+
+```bash
+curl -X PATCH "$HOST/admin/v1/Apps/$APP_ID" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/scim+json" \
+  -H "Accept: application/scim+json" \
+  -d '{
+    "schemas": [
+      "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+    ],
+    "Operations": [
+      {
+        "op": "add",
+        "path": "certificates",
+        "value": [
+          {
+            "certAlias": "public_certificate_1.crt"
+          }
+        ]
+      }
+    ]
+  }'
+```
+
+To attach a second certificate for rotation, upload the second certificate to the keystore with a different alias, then PATCH the app with that alias:
+
+```json
+{
+  "schemas": [
+    "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+  ],
+  "Operations": [
+    {
+      "op": "add",
+      "path": "certificates",
+      "value": [
+        {
+          "certAlias": "public_certificate_2.crt"
+        }
+      ]
+    }
+  ]
+}
+```
+
+## Delete A Certificate From The Keystore
+
+Use the certificate resource ID returned by `GET /admin/v1/OAuthClientCertificates`.
+
+```bash
+curl -X DELETE "$HOST/admin/v1/OAuthClientCertificates/<oAuthClientCertificateId>" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
 
 ## Generate The JWT Assertion
 
@@ -81,7 +205,7 @@ Generate a JWT assertion:
 
 ```bash
 node generate-client-assertion.js \
-  --certname client-cert \
+  --certname public_certificate_1.crt \
   --clientid <client_id> \
   --privatecert ./private_key.pem
 ```
@@ -108,7 +232,7 @@ Available flags:
 
 ```bash
 JWT=$(node generate-client-assertion.js \
-  --certname client-cert \
+  --certname public_certificate_1.crt \
   --clientid <client_id> \
   --privatecert ./private_key.pem)
 
@@ -145,16 +269,21 @@ The confidential application must have the required privileges to call the API. 
 
 The base JWT assertion / `private_key_jwt` authentication flow works with OCI IAM Domain.
 
-In testing, the standard confidential application certificate configuration supported one active client assertion certificate at a time. Uploading a second certificate replaced the first certificate. Uploading a PEM bundle containing two certificates was rejected.
+In testing, the confidential application UI certificate upload appeared to replace the certificate reference on the app. A PEM bundle containing two certificates was also rejected.
 
-Because of that, overlapping key rotation with two simultaneously valid certificates was not achievable through the tested single-app certificate upload flow.
+However, OCI IAM Domain stores OAuth client certificates in a keystore and confidential applications can reference certificate aliases from that keystore. By uploading certificates to `/admin/v1/OAuthClientCertificates` and PATCHing the confidential app's `certificates` attribute, multiple certificate aliases can be attached to the same app.
 
-If zero-downtime rotation is required, use two confidential applications during the transition window:
+This enables zero-downtime key rotation with one confidential app:
 
-- `client-app-v1` configured with certificate 1
-- `client-app-v2` configured with certificate 2
+- Upload certificate 1 to the keystore with alias `public_certificate_1.crt`.
+- PATCH the app to reference `public_certificate_1.crt`.
+- Client signs with private key 1 and sends `kid=public_certificate_1.crt`.
+- Upload certificate 2 to the keystore with alias `public_certificate_2.crt`.
+- PATCH the same app to also reference `public_certificate_2.crt`.
+- During rotation, client assertions signed with either private key can be accepted.
+- After cutover, remove the old certificate alias from the app and optionally delete the old certificate from the keystore.
 
-During rotation, allow both clients to access the APIs. After the customer fully switches to the new application and certificate, decommission the old application.
+The JWT `kid` must match the certificate alias attached to the app.
 
 ## Security Notes
 
