@@ -2,9 +2,9 @@ const fs = require("fs");
 const crypto = require("crypto");
 
 const defaults = {
-  certname: "client-cert",
+  certname: "public_certificate_1.crt",
   clientid: "",
-  privatecert: "./private_key.pem",
+  privatekey: "./private_key_1.pem",
   audience: "https://identity.oraclecloud.com/",
   expiresInSeconds: 3600,
 };
@@ -57,14 +57,14 @@ function printHelp() {
 Options:
   --certname <name>           Certificate alias used as JWT kid
   --clientid <id>             OAuth client ID used as iss and sub
-  --privatecert <path>        Path to private key PEM file
+  --privatekey <path>         Path to private key PEM file
   --audience <url>            JWT audience
   --expiresInSeconds <secs>   Assertion lifetime in seconds
   --help                      Show this help
 
 Defaults:
   --certname ${defaults.certname}
-  --privatecert ${defaults.privatecert}
+  --privatekey ${defaults.privatekey}
   --audience ${defaults.audience}
   --expiresInSeconds ${defaults.expiresInSeconds}`);
 }
@@ -83,7 +83,7 @@ function base64UrlJson(value) {
 
 try {
   const args = parseArgs(process.argv.slice(2));
-  const privateKey = fs.readFileSync(args.privatecert, "utf8");
+  const privateKey = fs.readFileSync(args.privatekey, "utf8");
   const now = Math.floor(Date.now() / 1000);
 
   const header = {

@@ -61,12 +61,14 @@ openssl x509 -in public_certificate.crt -text -noout
 2. Go to Identity & Security.
 3. Open the target IAM Domain.
 4. Create or open a Confidential Application.
-5. Set the client type to `Trusted`.
-6. Enable the Client Credentials grant type.
-7. Enable JWT assertion/client assertion authentication if shown.
-8. Add the `User Administrator` app role if you want to test the token against the users API.
-9. Activate the application.
-10. Copy the OAuth client ID and application ID.
+5. Edit the OAuth configuration.
+6. Select `Configure this application as a client now`.
+7. Set the client type to `Trusted`.
+8. Enable the Client Credentials grant type.
+9. Enable JWT assertion/client assertion authentication if shown.
+10. Add the `User Administrator` app role if you want to test the token against the users API.
+11. Activate the application.
+12. Copy the OAuth client ID and application ID.
 
 Do not use the confidential application UI certificate upload for rotation testing. In the UI, uploading a new certificate can replace the certificate reference on the app. For certificate rotation, upload certificates to the IAM Domain keystore using the API, then PATCH the confidential app to reference one or more certificate aliases.
 
@@ -78,7 +80,7 @@ The API examples below use these placeholders:
 HOST=https://<domain>.identity.oraclecloud.com
 APP_ID=<confidential_app_id>
 CLIENT_ID=<oauth_client_id>
-ACCESS_TOKEN=<admin_access_token>
+ACCESS_TOKEN=<admin_access_token_for_calling_admin_v1_apis>
 CERT_ALIAS=public_certificate_1.crt
 ```
 
@@ -234,7 +236,7 @@ Generate a JWT assertion:
 node generate-client-assertion.js \
   --certname public_certificate_1.crt \
   --clientid <client_id> \
-  --privatecert ./private_key.pem
+  --privatekey ./private_key_1.pem
 ```
 
 Show help:
@@ -248,12 +250,19 @@ Available flags:
 ```text
 --certname <name>           Certificate alias used as JWT kid
 --clientid <id>             OAuth client ID used as iss and sub
---privatecert <path>        Path to private key PEM file
+--privatekey <path>         Path to private key PEM file
 --audience <url>            JWT audience
 --expiresInSeconds <secs>   Assertion lifetime in seconds
 ```
 
-`--clientid` is required. The other flags have defaults.
+`--clientid` is required. The other flags have defaults:
+
+```text
+--certname public_certificate_1.crt
+--privatekey ./private_key_1.pem
+--audience https://identity.oraclecloud.com/
+--expiresInSeconds 3600
+```
 
 ## Request An Access Token
 
@@ -261,7 +270,7 @@ Available flags:
 JWT=$(node generate-client-assertion.js \
   --certname public_certificate_1.crt \
   --clientid <client_id> \
-  --privatecert ./private_key.pem)
+  --privatekey ./private_key_1.pem)
 
 curl -X POST "https://<domain>.identity.oraclecloud.com/oauth2/v1/token" \
   -H "Content-Type: application/x-www-form-urlencoded" \
