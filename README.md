@@ -61,18 +61,19 @@ openssl x509 -in public_certificate.crt -text -noout
 2. Go to Identity & Security.
 3. Open the target IAM Domain.
 4. Create or open a Confidential Application.
-5. Enable the Client Credentials grant type.
-6. Enable JWT assertion/client assertion authentication if shown.
-7. Upload `public_certificate.crt`.
-8. Set the certificate alias/name, for example:
+5. Set the client type to `Trusted`.
+6. Enable the Client Credentials grant type.
+7. Enable JWT assertion/client assertion authentication if shown.
+8. Upload `public_certificate.crt`.
+9. Set the certificate alias/name, for example:
 
 ```text
 client-cert
 ```
 
-9. Add the `User Administrator` app role if you want to test the token against the users API.
-10. Activate the application.
-11. Copy the OAuth client ID.
+10. Add the `User Administrator` app role if you want to test the token against the users API.
+11. Activate the application.
+12. Copy the OAuth client ID.
 
 ## Generate The JWT Assertion
 
