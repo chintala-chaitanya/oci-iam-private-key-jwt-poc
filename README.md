@@ -1,6 +1,6 @@
-# OCI IAM Domain JWT Assertion POC
+# OCI IAM Domain JWT Assertion Example
 
-This POC shows how to authenticate an OAuth confidential application in OCI IAM Domain using a JWT client assertion signed with a private key. This OAuth client authentication method is commonly referred to as `private_key_jwt`.
+This example shows how to authenticate an OAuth confidential application in OCI IAM Domain using a JWT client assertion signed with a private key. This OAuth client authentication method is commonly referred to as `private_key_jwt`.
 
 The goal is to avoid shared client secrets. The client owns the private key, OCI IAM Domain stores the public certificate, and the token endpoint validates the signed JWT assertion before issuing an access token.
 
@@ -46,7 +46,7 @@ openssl req -new -x509 \
   -key private_key.pem \
   -out public_certificate.crt \
   -days 365 \
-  -subj "/CN=oci-iam-jwt-assertion-poc"
+  -subj "/CN=oci-iam-jwt-assertion"
 ```
 
 Verify the certificate:
