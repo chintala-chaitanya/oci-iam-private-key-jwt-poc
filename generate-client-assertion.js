@@ -2,8 +2,8 @@ const fs = require("fs");
 const crypto = require("crypto");
 
 const defaults = {
-  certname: "hospital-cert",
-  clientid: "a8e97dbd23eb49ee8d26f7b554f8ee7f",
+  certname: "client-cert",
+  clientid: "",
   privatecert: "./private_key.pem",
   audience: "https://identity.oraclecloud.com/",
   expiresInSeconds: 3600,
@@ -43,6 +43,10 @@ function parseArgs(argv) {
     throw new Error("--expiresInSeconds must be a positive number");
   }
 
+  if (!args.clientid) {
+    throw new Error("--clientid is required");
+  }
+
   return args;
 }
 
@@ -60,7 +64,6 @@ Options:
 
 Defaults:
   --certname ${defaults.certname}
-  --clientid ${defaults.clientid}
   --privatecert ${defaults.privatecert}
   --audience ${defaults.audience}
   --expiresInSeconds ${defaults.expiresInSeconds}`);

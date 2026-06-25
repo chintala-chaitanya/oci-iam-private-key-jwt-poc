@@ -1,26 +1,72 @@
 const fs = require("fs");
 const crypto = require("crypto");
 
-const clientId = "a8e97dbd23eb49ee8d26f7b554f8ee7f";
-
-const certs = {
-  cert1: {
-    certificatePath: "./public_certificate.crt",
-    privateKeyPath: "./private_key.pem",
-  },
-  cert2: {
-    certificatePath: "./public_certificate_2.crt",
-    privateKeyPath: "./private_key_2.pem",
-  },
+const defaults = {
+  clientid: "",
+  privatecert: "./private_key.pem",
+  publiccert: "./public_certificate.crt",
+  audience: "https://identity.oraclecloud.com/",
+  expiresInSeconds: 3600,
 };
 
-const selectedCertName = process.argv[2] || "cert1";
-const selectedCert = certs[selectedCertName];
+function parseArgs(argv) {
+  const args = { ...defaults };
 
-if (!selectedCert) {
-  console.error(`Unknown certificate: ${selectedCertName}`);
-  console.error(`Use one of: ${Object.keys(certs).join(", ")}`);
-  process.exit(1);
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+
+    if (arg === "--help" || arg === "-h") {
+      printHelp();
+      process.exit(0);
+    }
+
+    if (!arg.startsWith("--")) {
+      throw new Error(`Unexpected argument: ${arg}`);
+    }
+
+    const key = arg.slice(2);
+    const value = argv[index + 1];
+
+    if (!Object.prototype.hasOwnProperty.call(args, key)) {
+      throw new Error(`Unknown flag: ${arg}`);
+    }
+
+    if (!value || value.startsWith("--")) {
+      throw new Error(`Missing value for ${arg}`);
+    }
+
+    args[key] = key === "expiresInSeconds" ? Number(value) : value;
+    index += 1;
+  }
+
+  if (!args.clientid) {
+    throw new Error("--clientid is required");
+  }
+
+  if (!Number.isFinite(args.expiresInSeconds) || args.expiresInSeconds <= 0) {
+    throw new Error("--expiresInSeconds must be a positive number");
+  }
+
+  return args;
+}
+
+function printHelp() {
+  console.log(`Usage:
+  node generate-client-assertion-x5t.js [options]
+
+Options:
+  --clientid <id>             OAuth client ID used as iss and sub
+  --privatecert <path>        Path to private key PEM file
+  --publiccert <path>         Path to public certificate PEM file
+  --audience <url>            JWT audience
+  --expiresInSeconds <secs>   Assertion lifetime in seconds
+  --help                      Show this help
+
+Defaults:
+  --privatecert ${defaults.privatecert}
+  --publiccert ${defaults.publiccert}
+  --audience ${defaults.audience}
+  --expiresInSeconds ${defaults.expiresInSeconds}`);
 }
 
 function base64UrlString(value) {
@@ -49,32 +95,37 @@ function certificateThumbprint(certificatePem) {
   return base64UrlString(crypto.createHash("sha1").update(der).digest());
 }
 
-const privateKey = fs.readFileSync(selectedCert.privateKeyPath, "utf8");
-const certificate = fs.readFileSync(selectedCert.certificatePath, "utf8");
-const now = Math.floor(Date.now() / 1000);
+try {
+  const args = parseArgs(process.argv.slice(2));
+  const privateKey = fs.readFileSync(args.privatecert, "utf8");
+  const certificate = fs.readFileSync(args.publiccert, "utf8");
+  const now = Math.floor(Date.now() / 1000);
 
-const header = {
-  alg: "RS256",
-  typ: "JWT",
-  x5t: certificateThumbprint(certificate),
-};
+  const header = {
+    alg: "RS256",
+    typ: "JWT",
+    x5t: certificateThumbprint(certificate),
+  };
 
-const payload = {
-  iss: clientId,
-  sub: clientId,
-  aud: ["https://identity.oraclecloud.com/"],
-  iat: now,
-  exp: now + 3600,
-};
+  const payload = {
+    iss: args.clientid,
+    sub: args.clientid,
+    aud: [args.audience],
+    iat: now,
+    exp: now + args.expiresInSeconds,
+  };
 
-const unsignedToken = `${base64UrlJson(header)}.${base64UrlJson(payload)}`;
+  const unsignedToken = `${base64UrlJson(header)}.${base64UrlJson(payload)}`;
 
-const signature = crypto
-  .createSign("RSA-SHA256")
-  .update(unsignedToken)
-  .end()
-  .sign(privateKey);
+  const signature = crypto
+    .createSign("RSA-SHA256")
+    .update(unsignedToken)
+    .end()
+    .sign(privateKey);
 
-const jwt = `${unsignedToken}.${base64UrlString(signature)}`;
-
-console.log(jwt);
+  console.log(`${unsignedToken}.${base64UrlString(signature)}`);
+} catch (error) {
+  console.error(error.message);
+  console.error("Run with --help to see usage.");
+  process.exit(1);
+}

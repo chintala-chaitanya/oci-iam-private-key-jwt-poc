@@ -1,12 +1,12 @@
-# OCI IAM Domain private_key_jwt POC
+# OCI IAM Domain JWT Assertion POC
 
-This POC shows how to authenticate an OAuth confidential application in OCI IAM Domain using a JWT client assertion signed with a private key.
+This POC shows how to authenticate an OAuth confidential application in OCI IAM Domain using a JWT client assertion signed with a private key. This OAuth client authentication method is commonly referred to as `private_key_jwt`.
 
 The goal is to avoid shared client secrets. The client owns the private key, OCI IAM Domain stores the public certificate, and the token endpoint validates the signed JWT assertion before issuing an access token.
 
 ## What Is JWT Client Assertion?
 
-`private_key_jwt` is an OAuth client authentication method where the client sends a signed JWT instead of a client secret.
+A JWT client assertion is a signed JWT sent to the token endpoint as proof of the client's identity. In OAuth, the `private_key_jwt` client authentication method uses this JWT assertion instead of a shared client secret.
 
 The JWT assertion contains:
 
@@ -46,7 +46,7 @@ openssl req -new -x509 \
   -key private_key.pem \
   -out public_certificate.crt \
   -days 365 \
-  -subj "/CN=hospital-private-key-jwt-poc"
+  -subj "/CN=oci-iam-jwt-assertion-poc"
 ```
 
 Verify the certificate:
@@ -67,7 +67,7 @@ openssl x509 -in public_certificate.crt -text -noout
 8. Set the certificate alias/name, for example:
 
 ```text
-hospital-cert
+client-cert
 ```
 
 9. Add the `User Administrator` app role if you want to test the token against the users API.
@@ -76,17 +76,11 @@ hospital-cert
 
 ## Generate The JWT Assertion
 
-Run with defaults:
-
-```bash
-node generate-client-assertion.js
-```
-
-Run with explicit values:
+Generate a JWT assertion:
 
 ```bash
 node generate-client-assertion.js \
-  --certname hospital-cert \
+  --certname client-cert \
   --clientid <client_id> \
   --privatecert ./private_key.pem
 ```
@@ -107,11 +101,13 @@ Available flags:
 --expiresInSeconds <secs>   Assertion lifetime in seconds
 ```
 
+`--clientid` is required. The other flags have defaults.
+
 ## Request An Access Token
 
 ```bash
 JWT=$(node generate-client-assertion.js \
-  --certname hospital-cert \
+  --certname client-cert \
   --clientid <client_id> \
   --privatecert ./private_key.pem)
 
@@ -146,7 +142,7 @@ The confidential application must have the required privileges to call the API. 
 
 ## Key Rotation Finding
 
-The base `private_key_jwt` authentication flow works with OCI IAM Domain.
+The base JWT assertion / `private_key_jwt` authentication flow works with OCI IAM Domain.
 
 In testing, the standard confidential application certificate configuration supported one active client assertion certificate at a time. Uploading a second certificate replaced the first certificate. Uploading a PEM bundle containing two certificates was rejected.
 
@@ -154,8 +150,8 @@ Because of that, overlapping key rotation with two simultaneously valid certific
 
 If zero-downtime rotation is required, use two confidential applications during the transition window:
 
-- `hospital-client-v1` configured with certificate 1
-- `hospital-client-v2` configured with certificate 2
+- `client-app-v1` configured with certificate 1
+- `client-app-v2` configured with certificate 2
 
 During rotation, allow both clients to access the APIs. After the customer fully switches to the new application and certificate, decommission the old application.
 
