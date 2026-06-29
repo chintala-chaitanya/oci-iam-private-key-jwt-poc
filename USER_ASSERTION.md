@@ -187,6 +187,28 @@ curl -X POST "https://<domain>.identity.oraclecloud.com/oauth2/v1/token" \
   --data-urlencode "client_assertion=$CLIENT_ASSERTION"
 ```
 
+## Note: Authorization Code Flow
+
+JWT client assertion is a client authentication method, not a grant type by itself. It can also be used in other token endpoint exchanges where the confidential client must authenticate.
+
+For example, in the OAuth Authorization Code flow, the user first authenticates at the authorize endpoint and the application receives an authorization code. The application then exchanges that code at the token endpoint. During that token exchange, the client commonly authenticates with `client_id` and `client_secret`, but it can also authenticate with JWT client assertion.
+
+```bash
+CLIENT_ASSERTION=$(node generate-client-assertion.js \
+  --certname public_certificate_1.crt \
+  --clientid <client_id> \
+  --privatekey ./private_key_1.pem)
+
+curl -X POST "https://<domain>.identity.oraclecloud.com/oauth2/v1/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=authorization_code" \
+  --data-urlencode "redirect_uri=<redirect_uri>" \
+  --data-urlencode "code=<authorization_code>" \
+  --data-urlencode "client_id=<client_id>" \
+  --data-urlencode "client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer" \
+  --data-urlencode "client_assertion=$CLIENT_ASSERTION"
+```
+
 ## Security Notes
 
 - Use user assertion only for trusted integrations, service accounts, or service-user scenarios where this behavior is explicitly intended.
