@@ -99,8 +99,7 @@ https://<domain>.identity.oraclecloud.com/admin/v1/Apps/<confidential_app_id>
 
 ```bash
 curl -X GET "$HOST/admin/v1/Apps/$APP_ID" \
-  -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -H "Accept: application/scim+json"
+  -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
 ## Upload A Certificate To The Keystore
@@ -116,8 +115,7 @@ Upload the certificate to the OAuth client certificate keystore:
 ```bash
 curl -X POST "$HOST/admin/v1/OAuthClientCertificates" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -H "Content-Type: application/scim+json" \
-  -H "Accept: application/scim+json" \
+  -H "Content-Type: application/json" \
   -d "{
     \"schemas\": [
       \"urn:ietf:params:scim:schemas:oracle:idcs:OAuthClientCertificate\"
@@ -145,8 +143,7 @@ The `certificateAlias` value is the alias that must be used as the JWT `kid`.
 
 ```bash
 curl -X GET "$HOST/admin/v1/OAuthClientCertificates" \
-  -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -H "Accept: application/scim+json"
+  -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
 ## Attach Certificate Aliases To The App
@@ -156,8 +153,7 @@ After uploading the certificate to the keystore, PATCH the confidential applicat
 ```bash
 curl -X PATCH "$HOST/admin/v1/Apps/$APP_ID" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -H "Content-Type: application/scim+json" \
-  -H "Accept: application/scim+json" \
+  -H "Content-Type: application/json" \
   -d '{
     "schemas": [
       "urn:ietf:params:scim:api:messages:2.0:PatchOp"
@@ -306,8 +302,7 @@ Successful response:
 
 ```bash
 curl -X GET "https://<domain>.identity.oraclecloud.com/admin/v1/Users?count=5" \
-  -H "Authorization: Bearer <access_token>" \
-  -H "Accept: application/scim+json"
+  -H "Authorization: Bearer <access_token>"
 ```
 
 The confidential application must have the required privileges to call the API. For the users API test above, assign the `User Administrator` app role to the confidential application.
