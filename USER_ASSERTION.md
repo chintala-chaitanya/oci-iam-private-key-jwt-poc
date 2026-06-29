@@ -9,8 +9,6 @@ User assertion is different from client assertion:
 
 Use this flow carefully. A signed user assertion can allow a trusted client to obtain tokens for a user without the user interactively signing in for that token request. This should be limited to tightly controlled service-user or trusted integration scenarios where the security model is clearly understood.
 
-For more background, see the RedThunder article: https://redthunder.blog/2018/10/26/using-public-private-key-authentication-for-oracle-idcs/
-
 ## Prerequisites
 
 - Node.js
@@ -20,6 +18,8 @@ For more background, see the RedThunder article: https://redthunder.blog/2018/10
 - JWT Assertion grant type enabled on the confidential application
 - The signing certificate uploaded to the OAuth client certificate keystore
 - The certificate alias attached to the confidential application
+
+Refer to [README.md](README.md) for confidential application creation, certificate keystore upload, and certificate alias attachment steps.
 
 ## JWT Claims
 
@@ -99,30 +99,6 @@ curl -X POST "https://<domain>.identity.oraclecloud.com/oauth2/v1/token" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   --data-urlencode "grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer" \
   --data-urlencode "assertion=$USER_ASSERTION" \
-  --data-urlencode "scope=<scope>"
-```
-
-If the client authenticates with JWT client assertion instead of a client secret, include the client assertion fields as well:
-
-```bash
-CLIENT_ASSERTION=$(node generate-client-assertion.js \
-  --certname public_certificate_1.crt \
-  --clientid <client_id> \
-  --privatekey ./private_key_1.pem)
-
-USER_ASSERTION=$(node generate-user-assertion.js \
-  --certname public_certificate_1.crt \
-  --clientid <client_id> \
-  --username <username> \
-  --privatekey ./private_key_1.pem)
-
-curl -X POST "https://<domain>.identity.oraclecloud.com/oauth2/v1/token" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  --data-urlencode "grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer" \
-  --data-urlencode "assertion=$USER_ASSERTION" \
-  --data-urlencode "client_id=<client_id>" \
-  --data-urlencode "client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer" \
-  --data-urlencode "client_assertion=$CLIENT_ASSERTION" \
   --data-urlencode "scope=<scope>"
 ```
 
