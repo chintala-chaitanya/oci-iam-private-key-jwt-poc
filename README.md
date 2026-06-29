@@ -65,10 +65,9 @@ openssl x509 -in public_certificate.crt -text -noout
 6. Select `Configure this application as a client now`.
 7. Set the client type to `Trusted`.
 8. Enable the Client Credentials grant type.
-9. Enable JWT assertion/client assertion authentication if shown.
-10. Add the `User Administrator` app role if you want to test the token against the users API.
-11. Activate the application.
-12. Copy the OAuth client ID and application ID.
+9. Add the `User Administrator` app role if you want to test the token against the users API.
+10. Activate the application.
+11. Copy the OAuth client ID and application ID.
 
 Do not use the confidential application UI certificate upload for rotation testing. In the UI, uploading a new certificate can replace the certificate reference on the app. For certificate rotation, upload certificates to the IAM Domain keystore using the API, then PATCH the confidential app to reference one or more certificate aliases.
 
