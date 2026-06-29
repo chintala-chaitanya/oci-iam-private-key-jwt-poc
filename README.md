@@ -4,6 +4,8 @@ This example shows how to authenticate an OAuth confidential application in OCI 
 
 The goal is to avoid shared client secrets. The client owns the private key, OCI IAM Domain stores the public certificate, and the token endpoint validates the signed JWT assertion before issuing an access token.
 
+For user JWT assertion grant examples, see [USER_ASSERTION.md](USER_ASSERTION.md).
+
 ## What Is JWT Client Assertion?
 
 A JWT client assertion is a signed JWT sent to the token endpoint as proof of the client's identity. In OAuth, the `private_key_jwt` client authentication method uses this JWT assertion instead of a shared client secret.
