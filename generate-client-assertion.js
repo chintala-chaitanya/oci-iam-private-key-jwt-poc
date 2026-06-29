@@ -81,6 +81,14 @@ function base64UrlJson(value) {
   return base64UrlString(JSON.stringify(value));
 }
 
+function randomJwtId() {
+  if (crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+
+  return crypto.randomBytes(16).toString("hex");
+}
+
 try {
   const args = parseArgs(process.argv.slice(2));
   const privateKey = fs.readFileSync(args.privatekey, "utf8");
@@ -97,7 +105,9 @@ try {
     sub: args.clientid,
     aud: [args.audience],
     iat: now,
+    nbf: now,
     exp: now + args.expiresInSeconds,
+    jti: randomJwtId(),
   };
 
   const unsignedToken = `${base64UrlJson(header)}.${base64UrlJson(payload)}`;

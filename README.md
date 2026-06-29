@@ -16,13 +16,17 @@ The JWT assertion contains:
 - `sub`: OAuth client ID
 - `aud`: token audience, usually `https://identity.oraclecloud.com/`
 - `iat`: issued-at timestamp
+- `nbf`: not-before timestamp
 - `exp`: expiration timestamp
+- `jti`: unique JWT ID
 
 The JWT header contains:
 
 - `alg`: `RS256`
 - `typ`: `JWT`
 - `kid`: certificate alias attached to the OCI IAM Domain confidential application
+
+OCI supports using `kid` or `x5t` to identify the signing certificate. This example uses `kid` because the confidential app references certificates by alias, and the JWT `kid` must match the attached certificate alias.
 
 OCI IAM Domain validates the JWT signature using the public certificate stored in the domain keystore and referenced by the confidential application.
 
@@ -263,6 +267,12 @@ Available flags:
 --privatekey ./private_key_1.pem
 --audience https://identity.oraclecloud.com/
 --expiresInSeconds 3600
+```
+
+The default audience is `https://identity.oraclecloud.com/`. If your IAM Domain expects the domain URL as the audience, pass it explicitly:
+
+```bash
+--audience https://<domain>.identity.oraclecloud.com/
 ```
 
 ## Request An Access Token

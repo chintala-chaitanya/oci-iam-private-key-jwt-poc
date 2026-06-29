@@ -43,6 +43,8 @@ typ = JWT
 kid = certificate alias attached to the app
 ```
 
+OCI supports using `kid` or `x5t` to identify the signing certificate. This example uses `kid` because the confidential app references certificates by alias, and the JWT `kid` must match the attached certificate alias.
+
 The important difference from client assertion is `sub`:
 
 ```text
@@ -84,6 +86,12 @@ Available flags:
 --privatekey ./private_key_1.pem
 --audience https://identity.oraclecloud.com/
 --expiresInSeconds 3600
+```
+
+The default audience is `https://identity.oraclecloud.com/`. If your IAM Domain expects the domain URL as the audience, pass it explicitly:
+
+```bash
+--audience https://<domain>.identity.oraclecloud.com/
 ```
 
 ## Token Request
