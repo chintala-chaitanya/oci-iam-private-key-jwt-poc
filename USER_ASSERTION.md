@@ -148,9 +148,43 @@ Successful response:
 ```json
 {
   "access_token": "...",
+  "refresh_token": "...",
   "token_type": "Bearer",
   "expires_in": 3600
 }
+```
+
+Refresh tokens can be returned for user-context flows when the application and requested scopes allow it, for example when requesting `offline_access`. Client credentials flows, including client credentials with JWT client assertion, normally return an access token only because there is no user session to refresh.
+
+## Refresh The Access Token
+
+Use the same token endpoint with `grant_type=refresh_token`.
+
+If the client uses a client secret:
+
+```bash
+curl -X POST "https://<domain>.identity.oraclecloud.com/oauth2/v1/token" \
+  -H "Authorization: Basic <base64_client_id_colon_client_secret>" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=refresh_token" \
+  --data-urlencode "refresh_token=<refresh_token>"
+```
+
+If the client uses JWT client assertion instead of a client secret:
+
+```bash
+CLIENT_ASSERTION=$(node generate-client-assertion.js \
+  --certname public_certificate_1.crt \
+  --clientid <client_id> \
+  --privatekey ./private_key_1.pem)
+
+curl -X POST "https://<domain>.identity.oraclecloud.com/oauth2/v1/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=refresh_token" \
+  --data-urlencode "refresh_token=<refresh_token>" \
+  --data-urlencode "client_id=<client_id>" \
+  --data-urlencode "client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer" \
+  --data-urlencode "client_assertion=$CLIENT_ASSERTION"
 ```
 
 ## Security Notes
