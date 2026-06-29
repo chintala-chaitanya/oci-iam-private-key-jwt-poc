@@ -7,7 +7,7 @@ User assertion is different from client assertion:
 - Client assertion proves the client application's identity.
 - User assertion asserts a user identity and requests a token in that user's context.
 
-Use this flow carefully. A signed user assertion can allow a trusted client to obtain tokens for a user without the user interactively signing in for that token request. This should be limited to tightly controlled service-user or trusted integration scenarios where the security model is clearly understood.
+Use this flow carefully. A signed user assertion allows a trusted client to request tokens for an asserted user without that user interactively signing in for the token request. This should be limited to tightly controlled trusted integrations, service accounts, or service-user scenarios where the client is explicitly authorized to assert those users.
 
 ## Prerequisites
 
@@ -189,7 +189,7 @@ curl -X POST "https://<domain>.identity.oraclecloud.com/oauth2/v1/token" \
 
 ## Security Notes
 
-- Use user assertion only for trusted integrations or service-user style scenarios where this behavior is explicitly intended.
+- Use user assertion only for trusted integrations, service accounts, or service-user scenarios where this behavior is explicitly intended.
 - Keep assertion lifetime short.
 - Protect private keys carefully.
 - Ensure the asserted user and requested scopes are tightly controlled.
