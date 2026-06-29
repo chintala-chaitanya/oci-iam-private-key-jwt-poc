@@ -189,7 +189,7 @@ curl -X POST "https://<domain>.identity.oraclecloud.com/oauth2/v1/token" \
 
 ## Note: Authorization Code Flow
 
-JWT client assertion is a client authentication method, not a grant type by itself. It can also be used in other token endpoint exchanges where the confidential client must authenticate.
+JWT client assertion is used to authenticate the confidential client at the token endpoint. This is separate from the JWT Assertion grant type used earlier in this document for the user assertion flow. The same client authentication mechanism can also be used in other token endpoint exchanges where the confidential client must authenticate.
 
 For example, in the OAuth Authorization Code flow, the user first authenticates at the authorize endpoint and the application receives an authorization code. The application then exchanges that code at the token endpoint. During that token exchange, the client commonly authenticates with `client_id` and `client_secret`, but it can also authenticate with JWT client assertion.
 
