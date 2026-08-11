@@ -80,11 +80,11 @@ kid=public_certificate_2.crt signed by private_key_2.pem
 
 After cutover, only certificate 2 should remain active.
 
-## Why The UI Path Can Be Confusing
+## Understanding The UI Path And The Keystore Model
 
 The confidential application UI provides a certificate upload flow, which is useful for a simple single-certificate setup. In a rotation scenario, however, uploading another certificate through that UI flow can appear to replace the current certificate reference on the app.
 
-That can make it look like overlapping certificates are not possible.
+For an overlapping rotation window, it helps to work with the keystore and app certificate-alias model directly.
 
 The working model is to use the lower-level API:
 
