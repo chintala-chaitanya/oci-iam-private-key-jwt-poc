@@ -181,6 +181,24 @@ Repeat with `public_certificate_2.crt`:
 ```bash
 CERT_ALIAS=public_certificate_2.crt
 CERT_B64=$(openssl x509 -in public_certificate_2.crt -outform DER | openssl base64 -A)
+
+curl -X POST "$HOST/admin/v1/OAuthClientCertificates" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"schemas\": [
+      \"urn:ietf:params:scim:schemas:oracle:idcs:OAuthClientCertificate\"
+    ],
+    \"certificateAlias\": \"$CERT_ALIAS\",
+    \"x509Base64Certificate\": \"$CERT_B64\"
+  }"
+```
+
+Verify the certificates in the keystore:
+
+```bash
+curl -X GET "$HOST/admin/v1/OAuthClientCertificates" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" | jq
 ```
 
 Each certificate alias must be unique. The alias is important because the client assertion JWT uses it as `kid`.
@@ -213,23 +231,33 @@ curl -X PATCH "$HOST/admin/v1/Apps/$APP_ID" \
 
 During rotation, attach the second alias as well:
 
-```json
-{
-  "schemas": [
-    "urn:ietf:params:scim:api:messages:2.0:PatchOp"
-  ],
-  "Operations": [
-    {
-      "op": "add",
-      "path": "certificates",
-      "value": [
-        {
-          "certAlias": "public_certificate_2.crt"
-        }
-      ]
-    }
-  ]
-}
+```bash
+curl -X PATCH "$HOST/admin/v1/Apps/$APP_ID" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "schemas": [
+      "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+    ],
+    "Operations": [
+      {
+        "op": "add",
+        "path": "certificates",
+        "value": [
+          {
+            "certAlias": "public_certificate_2.crt"
+          }
+        ]
+      }
+    ]
+  }'
+```
+
+Verify the certificate aliases attached to the app:
+
+```bash
+curl -X GET "$HOST/admin/v1/Apps/$APP_ID" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" | jq
 ```
 
 At this point, the same confidential app can validate assertions signed by either key.
@@ -313,26 +341,29 @@ The access token can call an authorized API
 
 After the client has moved to certificate 2, replace the app's `certificates` list with only the active alias:
 
-```json
-{
-  "schemas": [
-    "urn:ietf:params:scim:api:messages:2.0:PatchOp"
-  ],
-  "Operations": [
-    {
-      "op": "replace",
-      "path": "certificates",
-      "value": [
-        {
-          "certAlias": "public_certificate_2.crt"
-        }
-      ]
-    }
-  ]
-}
+```bash
+curl -X PATCH "$HOST/admin/v1/Apps/$APP_ID" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "schemas": [
+      "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+    ],
+    "Operations": [
+      {
+        "op": "replace",
+        "path": "certificates",
+        "value": [
+          {
+            "certAlias": "public_certificate_2.crt"
+          }
+        ]
+      }
+    ]
+  }'
 ```
 
-Optionally delete the old certificate from the keystore:
+Optionally delete the old certificate from the keystore. Use the keystore verification command above to find the certificate resource ID:
 
 ```bash
 curl -X DELETE "$HOST/admin/v1/OAuthClientCertificates/<oAuthClientCertificateId>" \
