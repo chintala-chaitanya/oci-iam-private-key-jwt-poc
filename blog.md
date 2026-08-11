@@ -137,8 +137,9 @@ In OCI Console:
 4. Select `Configure this application as a client now`.
 5. Set the client type to `Trusted`.
 6. Enable the Client Credentials grant type.
-7. Activate the application.
-8. Copy the OAuth client ID and application ID.
+7. If you want to validate the returned access token by calling the users API, add the `User Administrator` app role to the confidential application.
+8. Activate the application.
+9. Copy the OAuth client ID and application ID.
 
 For API calls in the next steps, use an admin access token that can call `/admin/v1` APIs.
 
@@ -284,7 +285,29 @@ curl -X POST "$HOST/oauth2/v1/token" \
 
 Repeat with certificate 2. During the rotation window, both should return access tokens.
 
-## Step 7: Complete The Rotation
+## Step 7: Validate The Access Token
+
+Getting a token proves that OCI IAM Domain accepted the JWT client assertion. For a stronger end-to-end test, call an API with that token.
+
+If the confidential application has the `User Administrator` app role, you can call the users endpoint:
+
+```bash
+ACCESS_TOKEN_FROM_ASSERTION=<access_token_from_token_response>
+
+curl -X GET "$HOST/admin/v1/Users?count=5" \
+  -H "Authorization: Bearer $ACCESS_TOKEN_FROM_ASSERTION"
+```
+
+This confirms that:
+
+```text
+Private key signed the JWT assertion
+OCI IAM Domain validated the assertion using the attached certificate alias
+OCI IAM Domain issued an access token
+The access token can call an authorized API
+```
+
+## Step 8: Complete The Rotation
 
 After the client has moved to certificate 2, replace the app's `certificates` list with only the active alias:
 
@@ -318,7 +341,7 @@ curl -X DELETE "$HOST/admin/v1/OAuthClientCertificates/<oAuthClientCertificateId
 
 JWT client assertion is used to authenticate the confidential client at the token endpoint. The same client authentication mechanism can be used in other token endpoint exchanges too.
 
-For example, in the JWT user assertion grant:
+For example, in the JWT user assertion grant, the confidential application must have the JWT Assertion grant type enabled. The user assertion is sent as `assertion`, while the client can authenticate using JWT client assertion.
 
 ```text
 grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer
@@ -344,6 +367,32 @@ python3 generate-user-assertion.py \
   --username "<username>" \
   --privatekey ./private_key_1.pem
 ```
+
+An end-to-end token request using user assertion plus JWT client assertion looks like this:
+
+```bash
+CLIENT_ASSERTION=$(python3 generate-client-assertion.py \
+  --certname public_certificate_1.crt \
+  --clientid "$CLIENT_ID" \
+  --privatekey ./private_key_1.pem)
+
+USER_ASSERTION=$(python3 generate-user-assertion.py \
+  --certname public_certificate_1.crt \
+  --clientid "$CLIENT_ID" \
+  --username "<username>" \
+  --privatekey ./private_key_1.pem)
+
+curl -X POST "$HOST/oauth2/v1/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer" \
+  --data-urlencode "assertion=$USER_ASSERTION" \
+  --data-urlencode "client_id=$CLIENT_ID" \
+  --data-urlencode "client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer" \
+  --data-urlencode "client_assertion=$CLIENT_ASSERTION" \
+  --data-urlencode "scope=<scope>"
+```
+
+If you request `offline_access` and the application policy allows it, user-context flows can return a refresh token. Client credentials flows normally return only an access token because there is no user session to refresh.
 
 ## Conclusion
 
