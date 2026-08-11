@@ -35,7 +35,7 @@ The signed JWT contains claims like:
 {
   "iss": "<client_id>",
   "sub": "<client_id>",
-  "aud": ["https://identity.oraclecloud.com/"],
+  "aud": ["https://<domain>.identity.oraclecloud.com/"],
   "iat": 1780000000,
   "nbf": 1780000000,
   "exp": 1780003600,
@@ -150,6 +150,8 @@ CLIENT_ID=<oauth_client_id>
 ACCESS_TOKEN=<admin_access_token_for_calling_admin_v1_apis>
 ```
 
+The examples below use `Content-Type: application/json` for admin API requests because that works cleanly from Postman. Oracle's REST API examples commonly show `Content-Type: application/scim+json` for these SCIM-style admin APIs, so use that media type if your environment or tooling requires strict SCIM content types.
+
 ## Step 3: Upload Certificates To The Keystore
 
 Convert the certificate to base64 DER:
@@ -258,7 +260,7 @@ python3 generate-client-assertion.py \
 
 The script uses `RS256` and includes `iss`, `sub`, `aud`, `iat`, `nbf`, `exp`, and `jti`.
 
-If your IAM Domain expects the domain URL as the audience, pass it explicitly:
+Oracle's client/user assertion documentation says the identity domain URL should be one of the `aud` values. The script default follows the value used in our IDCS-style testing, but you can pass the domain URL explicitly:
 
 ```bash
 --audience "https://<domain>.identity.oraclecloud.com/"
