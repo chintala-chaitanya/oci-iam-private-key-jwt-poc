@@ -132,7 +132,7 @@ Keep the private keys private. Only the certificates are uploaded to OCI IAM Dom
 In OCI Console:
 
 1. Open the target IAM Domain.
-2. Create or open a confidential application.
+2. [Create](https://docs.oracle.com/en-us/iaas/Content/Identity/applications/add-confidential-application.htm) or open a confidential application.
 3. Edit the OAuth configuration.
 4. Select `Configure this application as a client now`.
 5. Set the client type to `Trusted`.
@@ -370,7 +370,7 @@ curl -X DELETE "$HOST/admin/v1/OAuthClientCertificates/<oAuthClientCertificateId
   -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
-## User Assertion Addendum
+## Using JWT Client Assertion With User Assertion
 
 JWT client assertion is used to authenticate the confidential client at the token endpoint. The same client authentication mechanism can be used in other token endpoint exchanges too.
 
@@ -401,7 +401,7 @@ python3 generate-user-assertion.py \
   --privatekey ./private_key_1.pem
 ```
 
-An end-to-end token request using user assertion plus JWT client assertion looks like this:
+An end-to-end token request using user assertion plus JWT client assertion looks like this. Replace `<username>` with the user you want to assert and replace `<scope>` with the scope required for your use case. For quick IAM Domain API testing, you can use `urn:opc:idm:__myscopes__`.
 
 ```bash
 CLIENT_ASSERTION=$(python3 generate-client-assertion.py \
