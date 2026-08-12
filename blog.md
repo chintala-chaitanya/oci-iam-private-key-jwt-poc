@@ -55,6 +55,8 @@ The JWT header identifies the signing certificate:
 
 OCI supports `kid` or `x5t` to identify the certificate. This example uses `kid` because the confidential application references certificate aliases, and the JWT `kid` must match the alias attached to the app.
 
+At a high level, OCI IAM Domain handles this by treating the confidential application as the OAuth client. The public certificate is uploaded to the domain's OAuth client certificate keystore, and the confidential app references that certificate by alias. When the client calls the token endpoint, OCI reads the `kid` from the JWT header, finds the corresponding certificate alias attached to the app, and validates the JWT signature before issuing an access token.
+
 ## The Use Case: Certificate Rotation
 
 For a one-time setup, a single certificate is enough:
@@ -264,7 +266,7 @@ At this point, the same confidential app can validate assertions signed by eithe
 
 ## Step 5: Generate A Client Assertion With Python
 
-The Python script in this repo generates a JWT client assertion:
+Use the Python helper below to generate a JWT client assertion:
 
 ```bash
 python3 -m pip install cryptography
@@ -391,7 +393,7 @@ client assertion: sub = client ID
 
 Use user assertion carefully. A signed user assertion allows a trusted client to request tokens for an asserted user without that user interactively signing in for the token request. This should be limited to tightly controlled trusted integrations, service accounts, or service-user scenarios where the client is explicitly authorized to assert those users.
 
-This repo includes a Python helper:
+Use the Python helper below to generate the user assertion:
 
 ```bash
 python3 generate-user-assertion.py \
