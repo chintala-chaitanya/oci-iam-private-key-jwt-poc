@@ -1,5 +1,7 @@
 # Zero-Downtime JWT Client Assertion Certificate Rotation in OCI IAM Domain
 
+## Introduction
+
 OAuth client credentials with a shared client secret is simple, but it is not always the model customers want for external integrations. In some environments, especially integrations with strict key ownership requirements, the consuming system wants to own the private key and avoid exchanging a shared secret with the API provider.
 
 OCI IAM Domain supports this model using JWT client assertion, commonly referred to as `private_key_jwt`. The client signs a JWT with its private key, OCI IAM Domain validates the JWT with the public certificate associated with the confidential application, and the token endpoint issues an access token.
@@ -54,8 +56,6 @@ The JWT header identifies the signing certificate:
 ```
 
 OCI supports `kid` or `x5t` to identify the certificate. This example uses `kid` because the confidential application references certificate aliases, and the JWT `kid` must match the alias attached to the app.
-
-At a high level, OCI IAM Domain handles this by treating the confidential application as the OAuth client. The public certificate is uploaded to the domain's OAuth client certificate keystore, and the confidential app references that certificate by alias. When the client calls the token endpoint, OCI reads the `kid` from the JWT header, finds the corresponding certificate alias attached to the app, and validates the JWT signature before issuing an access token.
 
 ## The Use Case: Certificate Rotation
 
@@ -127,7 +127,7 @@ openssl req -new -x509 \
   -subj "/CN=oci-iam-jwt-assertion-2"
 ```
 
-Keep the private keys private. Only the certificates are uploaded to OCI IAM Domain.
+Keep the private keys private. Only the certificates are uploaded to the OCI IAM Domain OAuth client certificate keystore.
 
 ## Step 2: Configure The Confidential Application
 
@@ -290,7 +290,7 @@ python3 generate-client-assertion.py \
 
 The script uses `RS256` and includes `iss`, `sub`, `aud`, `iat`, `nbf`, `exp`, and `jti`.
 
-Oracle's client/user assertion documentation says the identity domain URL should be one of the `aud` values. The script default follows the value used in our IDCS-style testing, but you can pass the domain URL explicitly:
+The helper script uses `https://identity.oraclecloud.com/` as the audience value by default. If your environment requires the identity domain URL explicitly, pass it using `--audience`:
 
 ```bash
 --audience "https://<domain>.identity.oraclecloud.com/"
