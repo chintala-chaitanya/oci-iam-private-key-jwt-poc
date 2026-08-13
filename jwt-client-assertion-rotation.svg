@@ -1,0 +1,212 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="940" viewBox="0 0 1500 940" role="img" aria-labelledby="title desc">
+  <title id="title">Zero-downtime JWT client assertion certificate rotation in OCI IAM Domain</title>
+  <desc id="desc">An administrator uploads two public certificates to the OCI IAM Domain certificate keystore and attaches both aliases to one confidential application. The client signs a JWT client assertion with either private key and sends it to the centered OAuth token endpoint. OCI IAM identifies the app using client ID, resolves the JWT kid against an attached alias, and validates the signature with the matching public certificate. During rotation both aliases remain attached; after cutover only the new alias remains.</desc>
+
+  <defs>
+    <marker id="arrow-neutral" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="11" markerHeight="11" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#6F7A84"/>
+    </marker>
+    <marker id="arrow-runtime" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="11" markerHeight="11" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#2C5F9E"/>
+    </marker>
+    <marker id="arrow-admin" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="11" markerHeight="11" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#C74634"/>
+    </marker>
+    <marker id="arrow-old" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="11" markerHeight="11" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#D99024"/>
+    </marker>
+    <marker id="arrow-new" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="11" markerHeight="11" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#2F8C76"/>
+    </marker>
+    <marker id="arrow-validation" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="11" markerHeight="11" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#2F8C76"/>
+    </marker>
+    <style>
+      text { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; letter-spacing: 0; }
+      .canvas { fill: #F6F8FA; }
+      .surface { fill: #FFFFFF; stroke: #CFD6DC; stroke-width: 1.5; }
+      .domain { fill: #FFFFFF; stroke: #AEB8C1; stroke-width: 2; }
+      .title { fill: #171A1D; font-size: 32px; font-weight: 600; }
+      .subtitle { fill: #59636D; font-size: 17px; font-weight: 400; }
+      .eyebrow { fill: #6B747D; font-size: 13px; font-weight: 600; }
+      .section { fill: #202428; font-size: 20px; font-weight: 600; }
+      .heading { fill: #202428; font-size: 17px; font-weight: 600; }
+      .body { fill: #49535C; font-size: 14px; font-weight: 400; }
+      .small { fill: #66717B; font-size: 13px; font-weight: 400; }
+      .code { fill: #26323B; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: 13px; font-weight: 500; }
+      .code-small { fill: #33414B; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: 12px; font-weight: 500; }
+      .old-fill { fill: #FFF1D8; stroke: #D99024; stroke-width: 1.5; }
+      .old-text { fill: #8A5200; }
+      .new-fill { fill: #E5F4EF; stroke: #2F8C76; stroke-width: 1.5; }
+      .new-text { fill: #176B58; }
+      .runtime-fill { fill: #EBF2FA; stroke: #6F99C8; stroke-width: 1.5; }
+      .runtime-text { fill: #2C5F9E; }
+      .app-fill { fill: #F2EEFA; stroke: #9A83C3; stroke-width: 1.5; }
+      .neutral-arrow { fill: none; stroke: #6F7A84; stroke-width: 2; marker-end: url(#arrow-neutral); }
+      .runtime-arrow { fill: none; stroke: #2C5F9E; stroke-width: 2.5; marker-end: url(#arrow-runtime); }
+      .admin-arrow { fill: none; stroke: #C74634; stroke-width: 2; stroke-dasharray: 7 5; marker-end: url(#arrow-admin); }
+      .old-arrow { fill: none; stroke: #D99024; stroke-width: 2; marker-end: url(#arrow-old); }
+      .new-arrow { fill: none; stroke: #2F8C76; stroke-width: 2; marker-end: url(#arrow-new); }
+      .validation-arrow { fill: none; stroke: #2F8C76; stroke-width: 2.5; marker-end: url(#arrow-validation); }
+      .step-circle { fill: #C74634; }
+      .step-number { fill: #FFFFFF; font-size: 12px; font-weight: 600; text-anchor: middle; dominant-baseline: central; }
+    </style>
+  </defs>
+
+  <rect class="canvas" width="1500" height="940"/>
+  <text x="60" y="56" class="title">Zero-downtime certificate rotation with JWT client assertion</text>
+  <text x="60" y="86" class="subtitle">Keep both public-certificate aliases attached during cutover; private keys never leave the client.</text>
+
+  <g id="configuration">
+    <text x="60" y="133" class="eyebrow">CONFIGURATION</text>
+    <rect x="60" y="150" width="300" height="205" rx="8" class="surface"/>
+    <text x="84" y="181" class="section">Administrator / automation</text>
+
+    <circle cx="91" cy="216" r="12" class="step-circle"/>
+    <text x="91" y="216" class="step-number">1</text>
+    <text x="114" y="211" class="heading">Upload public certificates</text>
+    <text x="114" y="232" class="code-small">POST /admin/v1/</text>
+    <text x="114" y="249" class="code-small">OAuthClientCertificates</text>
+
+    <circle cx="91" cy="285" r="12" class="step-circle"/>
+    <text x="91" y="285" class="step-number">2</text>
+    <text x="114" y="280" class="heading">Attach aliases to the app</text>
+    <text x="114" y="301" class="code-small">PATCH /admin/v1/Apps/{appId}</text>
+    <text x="84" y="330" class="small">Attach both aliases during rotation.</text>
+  </g>
+
+  <g id="client-system">
+    <text x="60" y="390" class="eyebrow">CLIENT SYSTEM</text>
+    <rect x="60" y="407" width="300" height="243" rx="8" class="surface"/>
+    <text x="84" y="438" class="section">Integration</text>
+    <text x="84" y="461" class="small">The private keys remain here.</text>
+
+    <rect x="84" y="484" width="252" height="58" rx="7" class="old-fill"/>
+    <text x="104" y="508" class="heading old-text">Private key 1</text>
+    <text x="104" y="528" class="code-small old-text">private_key_1.pem</text>
+
+    <rect x="84" y="558" width="252" height="58" rx="7" class="new-fill"/>
+    <text x="104" y="582" class="heading new-text">Private key 2</text>
+    <text x="104" y="602" class="code-small new-text">private_key_2.pem</text>
+  </g>
+
+  <g id="jwt-client-assertion">
+    <g id="token-request-fields">
+      <text x="400" y="338" class="eyebrow">CLIENT AUTHENTICATION FIELDS</text>
+      <rect x="400" y="347" width="320" height="36" rx="6" class="app-fill"/>
+      <text x="560" y="370" class="code-small" text-anchor="middle">client_id = &lt;oauth_client_id&gt;</text>
+      <text x="560" y="402" class="heading" text-anchor="middle">+</text>
+    </g>
+
+    <rect x="400" y="407" width="320" height="243" rx="8" class="runtime-fill"/>
+    <text x="424" y="438" class="heading runtime-text">client_assertion (decoded JWT)</text>
+
+    <text x="424" y="466" class="eyebrow runtime-text">HEADER</text>
+    <text x="424" y="487" class="code-small">alg: RS256</text>
+    <text x="424" y="506" class="code-small">kid: public_certificate_[1|2].crt</text>
+
+    <text x="424" y="535" class="eyebrow runtime-text">PAYLOAD</text>
+    <text x="424" y="556" class="code-small">iss: &lt;client_id&gt;</text>
+    <text x="424" y="575" class="code-small">sub: &lt;client_id&gt;</text>
+    <text x="424" y="594" class="code-small">aud: https://identity.oraclecloud.com/</text>
+    <text x="424" y="613" class="code-small">exp: &lt;timestamp&gt;</text>
+
+    <text x="424" y="638" class="small">RS256 signature from the matching private key</text>
+
+    <path d="M336 513 C365 513 372 485 400 485" class="old-arrow"/>
+    <path d="M336 587 C365 587 372 566 400 566" class="new-arrow"/>
+  </g>
+
+  <g id="oci-iam-domain">
+    <rect x="760" y="130" width="680" height="520" rx="8" class="domain"/>
+    <rect x="760" y="130" width="680" height="48" rx="8" fill="#F1F3F5"/>
+    <path d="M760 170 H1440" stroke="#CFD6DC" stroke-width="1.5"/>
+    <text x="788" y="161" class="section">OCI IAM Domain</text>
+
+    <rect x="795" y="205" width="300" height="200" rx="8" class="app-fill"/>
+    <text x="819" y="236" class="heading">Confidential application</text>
+    <text x="819" y="259" class="small">OAuth client configuration</text>
+    <text x="819" y="286" class="code-small">client_id = &lt;oauth_client_id&gt;</text>
+    <text x="819" y="314" class="body">Attached certificate aliases</text>
+    <rect x="819" y="328" width="252" height="28" rx="5" class="old-fill"/>
+    <text x="833" y="347" class="code-small old-text">public_certificate_1.crt</text>
+    <rect x="819" y="365" width="252" height="28" rx="5" class="new-fill"/>
+    <text x="833" y="384" class="code-small new-text">public_certificate_2.crt</text>
+
+    <rect x="1130" y="205" width="270" height="200" rx="8" class="surface"/>
+    <text x="1154" y="236" class="heading">Certificate keystore</text>
+    <text x="1154" y="259" class="small">OAuth client public certificates</text>
+    <rect x="1154" y="282" width="222" height="34" rx="6" class="old-fill"/>
+    <text x="1167" y="304" class="code-small old-text">public_certificate_1.crt</text>
+    <rect x="1154" y="329" width="222" height="34" rx="6" class="new-fill"/>
+    <text x="1167" y="351" class="code-small new-text">public_certificate_2.crt</text>
+
+    <rect x="945" y="470" width="300" height="145" rx="8" class="runtime-fill"/>
+    <text x="969" y="502" class="heading runtime-text">OAuth token endpoint</text>
+    <text x="969" y="527" class="code runtime-text">POST /oauth2/v1/token</text>
+    <text x="969" y="556" class="body">Receives <tspan class="code-small">client_id</tspan> and</text>
+    <text x="969" y="579" class="body"><tspan class="code-small">client_assertion</tspan>, then validates the client.</text>
+    <text x="969" y="602" class="small">A valid request returns an access token.</text>
+  </g>
+
+  <g id="configuration-arrows">
+    <path d="M360 216 H720 V190 H1265 V205" class="admin-arrow"/>
+    <rect x="810" y="177" width="194" height="22" rx="4" fill="#F6F8FA"/>
+    <text x="907" y="193" class="small" text-anchor="middle">upload both public certificates</text>
+
+    <path d="M360 285 H740 V305 H795" class="admin-arrow"/>
+    <rect x="510" y="272" width="178" height="22" rx="4" fill="#F6F8FA"/>
+    <text x="599" y="288" class="small" text-anchor="middle">attach aliases to the app</text>
+  </g>
+
+  <g id="runtime-arrows">
+    <path d="M720 535 H945" class="runtime-arrow"/>
+    <rect x="742" y="507" width="186" height="22" rx="4" fill="#F6F8FA"/>
+    <text x="835" y="523" class="small" text-anchor="middle">send client_id + client_assertion</text>
+
+    <path d="M995 470 V438 H945 V405" class="runtime-arrow"/>
+    <rect x="821" y="420" width="154" height="22" rx="4" fill="#FFFFFF"/>
+    <text x="898" y="436" class="small" text-anchor="middle">client_id identifies app</text>
+
+    <path d="M1095 305 H1130" class="runtime-arrow"/>
+    <text x="1107" y="292" class="small" text-anchor="middle">kid</text>
+
+    <path d="M1265 405 V438 H1195 V470" class="validation-arrow"/>
+    <rect x="1167" y="416" width="210" height="22" rx="4" fill="#FFFFFF"/>
+    <text x="1272" y="432" class="small" text-anchor="middle">public key validates signature</text>
+  </g>
+
+  <g id="rotation-timeline">
+    <text x="60" y="715" class="eyebrow">CERTIFICATE ROTATION STATE</text>
+    <path d="M190 797 H1310" stroke="#C6CDD3" stroke-width="4" stroke-linecap="round"/>
+    <path d="M742 797 H1310" stroke="#2F8C76" stroke-width="4" stroke-linecap="round"/>
+
+    <circle cx="250" cy="797" r="11" fill="#D99024"/>
+    <circle cx="750" cy="797" r="11" fill="#2C5F9E"/>
+    <circle cx="1250" cy="797" r="11" fill="#2F8C76"/>
+
+    <text x="250" y="755" class="section" text-anchor="middle">Before rotation</text>
+    <text x="250" y="780" class="small" text-anchor="middle">Client signs with key 1</text>
+    <rect x="164" y="821" width="172" height="30" rx="5" class="old-fill"/>
+    <text x="250" y="841" class="code-small old-text" text-anchor="middle">app: certificate_1</text>
+
+    <text x="750" y="735" class="section" text-anchor="middle">Rotation window</text>
+    <text x="750" y="760" class="body" text-anchor="middle">Client can switch from key 1 to key 2</text>
+    <rect x="632" y="769" width="236" height="26" rx="4" class="runtime-fill"/>
+    <text x="750" y="787" class="small runtime-text" text-anchor="middle">both assertions remain valid</text>
+    <rect x="568" y="821" width="172" height="30" rx="5" class="old-fill"/>
+    <text x="654" y="841" class="code-small old-text" text-anchor="middle">app: certificate_1</text>
+    <text x="750" y="841" class="heading">+</text>
+    <rect x="760" y="821" width="172" height="30" rx="5" class="new-fill"/>
+    <text x="846" y="841" class="code-small new-text" text-anchor="middle">app: certificate_2</text>
+
+    <text x="1250" y="755" class="section" text-anchor="middle">After cutover</text>
+    <text x="1250" y="780" class="small" text-anchor="middle">Client signs with key 2</text>
+    <rect x="1164" y="821" width="172" height="30" rx="5" class="new-fill"/>
+    <text x="1250" y="841" class="code-small new-text" text-anchor="middle">app: certificate_2</text>
+    <text x="1250" y="871" class="small" text-anchor="middle">Remove old alias; optionally delete old certificate.</text>
+
+    <rect x="474" y="897" width="552" height="32" rx="6" fill="#FFFFFF" stroke="#CFD6DC" stroke-width="1.5"/>
+    <text x="750" y="918" class="body" text-anchor="middle">Zero downtime comes from the overlap: both aliases remain valid until the client switches.</text>
+  </g>
+</svg>

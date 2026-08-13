@@ -1,4 +1,4 @@
-# Zero-Downtime JWT Client Assertion Certificate Rotation in OCI IAM Domain
+# A Zero-Downtime Approach to JWT Client Assertion Certificate Rotation in OCI IAM Domain
 
 ## Introduction
 
@@ -96,6 +96,10 @@ The working model is to use the lower-level API:
 4. After cutover, replace the app's certificate list with only the active alias.
 
 This gives us a single confidential application with an old/new certificate overlap window.
+
+![Zero-downtime JWT client assertion certificate rotation in OCI IAM Domain](jwt-client-assertion-rotation.png)
+
+*Figure 1: Both certificate aliases remain attached during the rotation window, allowing the client to switch private keys without interrupting token requests.*
 
 ## Step 1: Generate Key Pair And Certificate
 
